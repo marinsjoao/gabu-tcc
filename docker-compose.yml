@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: gabu_db
+    restart: always
+    environment:
+      POSTGRES_USER: gabu
+      POSTGRES_PASSWORD: gabu123
+      POSTGRES_DB: gabu_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gabu_network
+
+  backend:
+    build: ./gabu-backend
+    container_name: gabu_backend
+    restart: always
+    ports:
+      - "3333:3333"
+    environment:
+      DATABASE_URL: postgresql://gabu:gabu123@db:5432/gabu_db?schema=public
+      PORT: 3333
+    volumes:
+      - ./gabu-backend:/app
+      - /app/node_modules
+    depends_on:
+      - db
+    networks:
+      - gabu_network
+
+volumes:
+  postgres_data:
+
+networks:
+  gabu_network:
+    driver: bridge
