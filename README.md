@@ -2,6 +2,10 @@
 
 Aplicativo mobile gamificado para preparação do ENEM, construído com **React Native (Expo)** no frontend, **Node.js + Express + Prisma** no backend e **PostgreSQL** como banco de dados. Todo o ambiente de desenvolvimento é orquestrado com **Docker**.
 
+O frontend atualmente segue uma estratégia **offline-first**: as questões e o progresso do jogador ficam disponíveis localmente no dispositivo, sem depender de conexão com o backend ou com a internet. As instruções e informações do backend neste README são mantidas para referência.
+
+As questões locais estão organizadas por ano em `gabu-frontend/public/`; o catálogo foi obtido do projeto [enem-api](https://github.com/yunger7/enem-api), documentado em [docs.enem.dev](https://docs.enem.dev/introduction). O progresso do jogador é armazenado no SQLite do dispositivo.
+
 ![Node](https://img.shields.io/badge/Node.js-18.x-green)
 ![Docker](https://img.shields.io/badge/Docker-✓-blue)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)
@@ -141,15 +145,14 @@ Se retornou isso, **o backend está 100% funcional**. 🎉
 
 ### 6. Instale as dependências do frontend
 
-**Em outro terminal**, entre na pasta do frontend:
+**Em outro terminal**, entre na pasta do frontend. O app pode ser desenvolvido e executado sem iniciar o backend:
 
 ```bash
 cd gabu-frontend
-npm install
-npx expo install axios react-dom react-native-web
+npm ci
 ```
 
-Os pacotes `react-dom` e `react-native-web` são necessários para rodar o app no **navegador** (útil para testes rápidos sem emulador).
+As dependências de cada plataforma já estão declaradas no projeto e instaladas pelo comando acima.
 
 ### 7. Faça login na sua conta Expo (opcional, mas recomendado)
 
@@ -191,10 +194,10 @@ npx expo logout
 
 ### 8. Rode o frontend
 
-Com o **backend rodando** (`docker compose up` em outro terminal), execute:
+Execute na pasta `gabu-frontend`:
 
 ```bash
-npx expo start
+npm run start
 ```
 
 Escolha como abrir o app:
@@ -203,7 +206,7 @@ Escolha como abrir o app:
 - Pressione **`w`** para abrir no navegador
 - Escaneie o **QR Code** com o app **Expo Go** no celular
 
-Se aparecer **"✅ Backend do GABU funcionando! (0 usuários)"**, tudo está conectado. 🎉
+O SQLite local é inicializado automaticamente quando o app é aberto pela primeira vez.
 
 ---
 
@@ -270,11 +273,11 @@ O token é gerado em [expo.dev/settings/access-tokens](https://expo.dev/settings
 
 | Ação | Comando |
 | :--- | :--- |
-| Rodar o Expo | `npx expo start` |
-| Rodar no navegador | `npx expo start --web` |
-| Rodar no Android | `npx expo start --android` |
-| Rodar no iOS (macOS) | `npx expo start --ios` |
-| Limpar cache | `npx expo start -c` |
+| Rodar o Expo | `npm run start` |
+| Rodar no navegador | `npm run web` |
+| Rodar no Android | `npm run android` |
+| Rodar no iOS (macOS) | `npm run ios` |
+| Limpar cache | `npx expo start --clear` |
 | Login no Expo | `npx expo login` |
 | Logout | `npx expo logout` |
 
@@ -310,26 +313,27 @@ Abra no navegador: [http://localhost:5555](http://localhost:5555)
 
 ## 📱 Rodando o Frontend
 
-O frontend **não roda dentro do Docker** durante o desenvolvimento, porque o Expo precisa de hot reload instantâneo e comunicação direta com o emulador ou celular.
+O frontend **não roda dentro do Docker** durante o desenvolvimento, porque o Expo precisa de hot reload instantâneo e comunicação direta com o emulador ou celular. A execução atual é offline-first e não exige que o backend esteja iniciado.
 
 ### Primeira vez
 
 ```bash
 cd gabu-frontend
-npm install
-npx expo install axios react-dom react-native-web
+npm ci
 npx expo login     # opcional
-npx expo start
+npm run start
 ```
 
 ### Próximas vezes
 
 ```bash
 cd gabu-frontend
-npx expo start
+npm run start
 ```
 
 ### Ajuste o `API_URL` conforme o ambiente
+
+Esta configuração é mantida como referência para a integração com o backend. O frontend offline-first atual não depende de `API_URL` para carregar questões ou salvar o progresso local.
 
 No arquivo `gabu-frontend/App.tsx`:
 
