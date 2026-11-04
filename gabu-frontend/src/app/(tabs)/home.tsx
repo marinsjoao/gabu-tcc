@@ -64,7 +64,7 @@ export default function Home() {
     );
   }
 
-  if (error || !user) {
+  if (!user || error) {
     return (
       <View style={styles.center}>
         <Text style={styles.error}>{error ?? 'Usuário local indisponível.'}</Text>
@@ -92,7 +92,7 @@ export default function Home() {
             </Text>
             <View style={styles.streakBox}>
               <Text style={styles.streakTitle}>
-                {user.streak} {user.streak === 1 ? 'dia' : 'dias'} seguidos
+                {user.streak} {user.streak === 1 ? 'Dia' : 'Dias'} Seguidos
               </Text>
               <Text style={styles.streakSubtitle}>
                 Mantenha sua sequência de estudos!
@@ -101,21 +101,37 @@ export default function Home() {
           </View>
         </View>
 
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/stats')}
+          style={styles.rankingCard}
+        >
+          <Image
+            source={require('../../../assets/trofeu.jpg')}
+            style={styles.trophyImage}
+            resizeMode="contain"
+          />
+          <View style={styles.rankingContent}>
+            <Text style={styles.rankingTitle}>
+              Seu recorde é de {user.best_streak}{' '}
+              {user.best_streak === 1 ? 'dia' : 'dias'}!
+            </Text>
+            <Text style={styles.rankingLink}>Confira suas estatísticas</Text>
+          </View>
+        </Pressable>
+
         <View style={styles.progressCard}>
-          <Text style={styles.cardTitle}>Seu progresso</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>{user.xp}</Text>
-              <Text style={styles.statLabel}>XP</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>{user.coins}</Text>
-              <Text style={styles.statLabel}>Moedas</Text>
-            </View>
-            <View style={styles.stat}>
-              <Text style={styles.statValue}>{user.daily_goal}</Text>
-              <Text style={styles.statLabel}>Meta diária</Text>
-            </View>
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{user.xp}</Text>
+            <Text style={styles.statLabel}>XP</Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{user.coins}</Text>
+            <Text style={styles.statLabel}>Moedas</Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statValue}>{user.daily_goal}</Text>
+            <Text style={styles.statLabel}>Meta diária</Text>
           </View>
         </View>
 
@@ -154,7 +170,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   streakCard: {
-    minHeight: 260,
+    minHeight: 280,
     backgroundColor: '#000000',
     borderWidth: 2,
     borderColor: '#263D5A',
@@ -168,8 +184,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: -80,
     bottom: 0,
-    width: 250,
-    height: 250,
+    width: 280,
+    height: 280,
   },
   streakContent: {
     flex: 1,
@@ -194,7 +210,7 @@ const styles = StyleSheet.create({
   },
   streakTitle: {
     color: '#FF681C',
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: 'bold',
     marginBottom: 8,
     textAlign: 'center',
@@ -204,23 +220,53 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
+  rankingCard: {
+    minHeight: 165,
+    backgroundColor: '#000000',
+    borderWidth: 2,
+    borderColor: '#263D5A',
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    overflow: 'hidden',
+    elevation: 5,
+  },
+  trophyImage: {
+    width: 160,
+    height: 160,
+    position: 'absolute',
+    left: -65,
+  },
+  rankingContent: {
+    flex: 1,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+  },
+  rankingTitle: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    marginLeft: 48,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  rankingLink: {
+    color: '#4E88DF',
+    fontSize: 18,
+    textDecorationLine: 'underline',
+    marginTop: 8,
+    marginLeft: 48,
+    textAlign: 'center',
+  },
   progressCard: {
-    padding: 20,
+    minHeight: 100,
+    padding: 16,
     backgroundColor: '#111111',
     borderWidth: 2,
     borderColor: '#263D5A',
     borderRadius: 20,
-  },
-  cardTitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: 20,
+    alignItems: 'center',
   },
   stat: {
     alignItems: 'center',
@@ -236,7 +282,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   playButton: {
-    minHeight: 110,
+    minHeight: 130,
     backgroundColor: '#000000',
     borderWidth: 2,
     borderColor: '#65D957',
@@ -248,12 +294,12 @@ const styles = StyleSheet.create({
   },
   playText: {
     color: '#7BFF72',
-    fontSize: 40,
+    fontSize: 48,
     fontWeight: 'bold',
     letterSpacing: 2,
   },
   playArrow: {
     color: '#FFFFFF',
-    fontSize: 52,
+    fontSize: 68,
   },
 });

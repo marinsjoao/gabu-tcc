@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Pressable,
   StyleSheet,
   Text,
@@ -73,8 +74,12 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>GABU</Text>
-      <Text style={styles.subtitle}>Como podemos chamar você?</Text>
+      <Image
+        source={require('../../assets/logo.jpeg')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
+      <Text style={styles.title}>Como podemos chamar você?</Text>
       <TextInput
         accessibilityLabel="Seu nome"
         autoCapitalize="words"
@@ -114,23 +119,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     padding: 24,
     backgroundColor: '#000000',
   },
+  logo: {
+    width: '100%',
+    maxWidth: 300,
+    height: 220,
+    marginBottom: 8,
+  },
   title: {
     color: '#FFFFFF',
-    fontSize: 48,
+    fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
-  },
-  subtitle: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    marginTop: 24,
     marginBottom: 16,
-    textAlign: 'center',
   },
   input: {
+    width: '100%',
+    maxWidth: 460,
     minHeight: 56,
     paddingHorizontal: 16,
     borderRadius: 12,
@@ -144,6 +152,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   button: {
+    width: '100%',
+    maxWidth: 460,
     minHeight: 56,
     alignItems: 'center',
     justifyContent: 'center',
