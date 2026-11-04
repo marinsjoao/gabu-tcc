@@ -7,6 +7,16 @@ export async function getUser(db: SQLiteDatabase): Promise<User> {
   return user;
 }
 
+export async function saveUserName(
+  db: SQLiteDatabase,
+  name: string
+): Promise<void> {
+  const normalizedName = name.trim();
+  if (!normalizedName) throw new Error('O nome do usuário não pode ficar vazio');
+
+  await db.runAsync('UPDATE User SET name = ? WHERE id = 1', normalizedName);
+}
+
 function todayStr(date = new Date()): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');

@@ -6,7 +6,11 @@ import {
   StyleSheet,
 } from 'react-native';
 
-export default function AppHeader() {
+type AppHeaderProps = {
+  streak: number;
+};
+
+export default function AppHeader({ streak }: AppHeaderProps) {
   return (
     <View style={styles.container}>
 
@@ -18,13 +22,13 @@ export default function AppHeader() {
 
       <View style={styles.streakIndicator}>
         <Image
-          source={require('../../assets/fogo.jpeg')}
+          source={require('../../assets/fogo - black back.jpeg')}
           style={styles.fireIcon}
           resizeMode="contain"
         />
 
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>8</Text> {/* STREAK MOCKADO */}
+          <Text style={styles.badgeText}>{streak}</Text>
         </View>
       </View>
 
