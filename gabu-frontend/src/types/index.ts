@@ -1,6 +1,9 @@
 export type Question = {
   id: number;
   materia: string;
+  tema?: string;
+  prova?: string | number;
+  nivel?: string;
   pergunta: string;
   alternativas: string[];
   correta: number; // índice da alternativa correta

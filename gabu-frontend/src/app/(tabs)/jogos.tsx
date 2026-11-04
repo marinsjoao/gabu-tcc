@@ -8,20 +8,23 @@ import {
   View,
 } from 'react-native';
 import { useSQLiteContext } from 'expo-sqlite';
-import { questions } from '../../data/questions';
+import { getRandomQuestion } from '../../data/questions';
 import { saveAnswer } from '../../database/repositories/answersRepository';
+import type { Question } from '../../types';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
 export default function Jogos() {
   const db = useSQLiteContext();
-  const question = questions[0];
+  const [question, setQuestion] = useState<Question | undefined>(
+    () => getRandomQuestion()
+  );
   const [selected, setSelected] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleAnswer(index: number) {
-    if (selected !== null || saving) return;
+    if (!question || selected !== null || saving) return;
 
     setSaving(true);
     setError(null);
@@ -35,9 +38,26 @@ export default function Jogos() {
     }
   }
 
-  function getOptionStyle(index: number) {
+  function handleNextQuestion() {
+    setQuestion(getRandomQuestion());
+    setSelected(null);
+    setError(null);
+  }
+
+  const currentQuestion = question;
+  if (!currentQuestion) {
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyText}>Nenhuma questão disponível.</Text>
+      </View>
+    );
+  }
+
+  function getOptionStyle(index: number, correctIndex: number) {
     if (selected === null) return styles.option;
-    if (index === question.correta) return [styles.option, styles.optionCorrect];
+    if (index === correctIndex) {
+      return [styles.option, styles.optionCorrect];
+    }
     if (index === selected) return [styles.option, styles.optionWrong];
     return [styles.option, styles.optionDisabled];
   }
@@ -46,15 +66,15 @@ export default function Jogos() {
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Hora de jogar!</Text>
       <View style={styles.card}>
-        <Text style={styles.materia}>{question.materia}</Text>
-        <Text style={styles.pergunta}>{question.pergunta}</Text>
-        {question.alternativas.map((alternative, index) => (
+        <Text style={styles.materia}>{currentQuestion.materia}</Text>
+        <Text style={styles.pergunta}>{currentQuestion.pergunta}</Text>
+        {currentQuestion.alternativas.map((alternative, index) => (
           <Pressable
-            key={`${question.id}-${index}`}
+            key={`${currentQuestion.id}-${index}`}
             accessibilityRole="button"
             disabled={selected !== null || saving}
             onPress={() => handleAnswer(index)}
-            style={getOptionStyle(index)}
+            style={getOptionStyle(index, currentQuestion.correta)}
           >
             <Text style={styles.optionText}>
               {LETTERS[index]}) {alternative}
@@ -66,15 +86,17 @@ export default function Jogos() {
         {selected !== null && (
           <View style={styles.feedback}>
             <Text style={styles.feedbackTitle}>
-              {selected === question.correta ? '✅ Acertou!' : '❌ Errou!'}
+              {selected === currentQuestion.correta ? '✅ Acertou!' : '❌ Errou!'}
             </Text>
-            <Text style={styles.explicacao}>{question.explicacao}</Text>
+            {currentQuestion.explicacao ? (
+              <Text style={styles.explicacao}>{currentQuestion.explicacao}</Text>
+            ) : null}
             <Pressable
               accessibilityRole="button"
-              onPress={() => setSelected(null)}
+              onPress={handleNextQuestion}
               style={styles.resetButton}
             >
-              <Text style={styles.resetText}>Tentar de novo</Text>
+              <Text style={styles.resetText}>Próxima questão</Text>
             </Pressable>
           </View>
         )}
@@ -84,6 +106,18 @@ export default function Jogos() {
 }
 
 const styles = StyleSheet.create({
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: '#000000',
+  },
+  emptyText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    textAlign: 'center',
+  },
   container: {
     flexGrow: 1,
     padding: 20,
