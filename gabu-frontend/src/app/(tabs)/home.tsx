@@ -74,7 +74,7 @@ export default function Home() {
 
   return (
     <View style={styles.container}>
-      <AppHeader streak={user.streak} />
+      <AppHeader star={user.coins} streak={user.streak} />
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -119,21 +119,6 @@ export default function Home() {
             <Text style={styles.rankingLink}>Confira suas estatísticas</Text>
           </View>
         </Pressable>
-
-        <View style={styles.progressCard}>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{user.xp}</Text>
-            <Text style={styles.statLabel}>XP</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{user.coins}</Text>
-            <Text style={styles.statLabel}>Moedas</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{user.daily_goal}</Text>
-            <Text style={styles.statLabel}>Meta diária</Text>
-          </View>
-        </View>
 
         <Pressable
           accessibilityRole="button"

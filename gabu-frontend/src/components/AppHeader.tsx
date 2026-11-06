@@ -7,12 +7,24 @@ import {
 } from 'react-native';
 
 type AppHeaderProps = {
+  star: number;
   streak: number;
 };
 
-export default function AppHeader({ streak }: AppHeaderProps) {
+export default function AppHeader({ star, streak }: AppHeaderProps) {
   return (
     <View style={styles.container}>
+      <View style={styles.starIndicator}>
+        <Image
+          source={require('../../assets/star - black back.jpeg')}
+          style={styles.fireIcon}
+          resizeMode="contain"
+        />
+
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{star}</Text>
+        </View>
+      </View>
 
       <Image
         source={require('../../assets/nome_gabu.jpeg')}
@@ -41,7 +53,7 @@ const styles = StyleSheet.create({
     height: 110,
     backgroundColor: '#000000',
     flexDirection: 'row', //Elementos organizados lado a lado
-    alignItems: 'center', //Vertical
+    alignItems: 'flex-end', //Vertical
     justifyContent: 'center', //Horizontal
     borderBottomWidth: 1,
     borderBottomColor: '#4E88DF',
@@ -59,9 +71,17 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
 
+  starIndicator: {
+    position: 'absolute',
+    left: 24,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+
   fireIcon: {
     width: 50,
     height: 50,
+    marginBottom: 15
   },
 
   badge: {
