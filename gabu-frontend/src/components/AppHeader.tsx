@@ -11,20 +11,28 @@ type AppHeaderProps = {
   streak: number;
 };
 
-export default function AppHeader({ star, streak }: AppHeaderProps) {
+import { useUser } from '../contexts/UserContext';
+
+export default function AppHeader() {
+  const { user, loading } = useUser();
+
+  const star = user?.coins ?? 0;
+  const streak = user?.streak ?? 0;
+
+  // * Estrela já está funcional e pronta, mas não estará presente no MVP: 
+  // <View style={styles.starIndicator}>
+  //   <Image
+  //     source={require('../../assets/star - black back.jpeg')}
+  //     style={styles.fireIcon}
+  //     resizeMode="contain"
+  //   />
+
+  //   <View style={styles.badge}>
+  //     <Text style={styles.badgeText}>{star}</Text>
+  //   </View>
+  // </View>
   return (
     <View style={styles.container}>
-      <View style={styles.starIndicator}>
-        <Image
-          source={require('../../assets/star - black back.jpeg')}
-          style={styles.fireIcon}
-          resizeMode="contain"
-        />
-
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{star}</Text>
-        </View>
-      </View>
 
       <Image
         source={require('../../assets/nome_gabu.jpeg')}

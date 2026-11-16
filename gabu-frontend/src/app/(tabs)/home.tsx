@@ -72,9 +72,29 @@ export default function Home() {
     );
   }
 
+  // * Componente de Chamada ao placar de líderes. Está pronto, mas não irá para o MVP:
+  //   <Pressable
+  //   accessibilityRole="button"
+  //   onPress={() => router.push('/stats')}
+  //   style={styles.rankingCard}
+  // >
+  //   <Image
+  //     source={require('../../../assets/trofeu.jpg')}
+  //     style={styles.trophyImage}
+  //     resizeMode="contain"
+  //   />
+  //   <View style={styles.rankingContent}>
+  //     <Text style={styles.rankingTitle}>
+  //       Seu recorde é de {user.best_streak}{' '}
+  //       {user.best_streak === 1 ? 'dia' : 'dias'}!
+  //     </Text>
+  //     <Text style={styles.rankingLink}>Confira suas estatísticas</Text>
+  //   </View>
+  // </Pressable>
+
   return (
     <View style={styles.container}>
-      <AppHeader star={user.coins} streak={user.streak} />
+      <AppHeader/>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -100,25 +120,6 @@ export default function Home() {
             </View>
           </View>
         </View>
-
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => router.push('/stats')}
-          style={styles.rankingCard}
-        >
-          <Image
-            source={require('../../../assets/trofeu.jpg')}
-            style={styles.trophyImage}
-            resizeMode="contain"
-          />
-          <View style={styles.rankingContent}>
-            <Text style={styles.rankingTitle}>
-              Seu recorde é de {user.best_streak}{' '}
-              {user.best_streak === 1 ? 'dia' : 'dias'}!
-            </Text>
-            <Text style={styles.rankingLink}>Confira suas estatísticas</Text>
-          </View>
-        </Pressable>
 
         <Pressable
           accessibilityRole="button"
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
     minHeight: 280,
     backgroundColor: '#000000',
     borderWidth: 2,
-    borderColor: '#263D5A',
+    borderColor: '#FF681C',
     borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',

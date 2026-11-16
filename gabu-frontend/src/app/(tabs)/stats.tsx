@@ -86,7 +86,7 @@ export default function Stats() {
   if (!stats && !error) {
     return (
       <View style={styles.center}>
-        <AppHeader star={user.coins} streak={user.streak} />
+        <AppHeader/>
         <ActivityIndicator size="large" color="#4E88DF" />
       </View>
     );
@@ -111,8 +111,8 @@ export default function Stats() {
 
   return (
     <View style={styles.containerAll}>
-      <AppHeader star={user.coins} streak={user.streak} />
-        <ScrollView style={styles.container}>
+      <AppHeader/>
+        <ScrollView contentContainerStyle={styles.container}>
           <Text style={styles.title}>Estatísticas</Text>
           
           <Text style={styles.subtitle}>Geral</Text>
