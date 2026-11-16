@@ -30,12 +30,15 @@ function yesterdayStr(): string {
   return todayStr(d);
 }
 
-/** Soma XP/moedas e atualiza o streak diário. */
+/** Soma moedas e atualiza o streak diário sem penalizar respostas incorretas. */
 export async function addRewards(
   db: SQLiteDatabase,
-  xp: number,
   coins: number
 ): Promise<void> {
+  if (!Number.isInteger(coins) || coins < 0) {
+    throw new Error('A recompensa em moedas não pode ser negativa');
+  }
+
   const user = await getUser(db);
   const today = todayStr();
 
@@ -47,10 +50,11 @@ export async function addRewards(
 
   await db.runAsync(
     `UPDATE User
-        SET xp = xp + ?, coins = coins + ?,
+        SET coins = coins + ?,
+            best_coins = MAX(best_coins, coins + ?),
             streak = ?, best_streak = ?, last_study_date = ?
       WHERE id = 1`,
-    xp,
+    coins,
     coins,
     streak,
     bestStreak,

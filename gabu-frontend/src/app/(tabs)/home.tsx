@@ -117,6 +117,10 @@ export default function Home() {
               <Text style={styles.streakSubtitle}>
                 Mantenha sua sequência de estudos!
               </Text>
+              <Text style={styles.recordSubtitle}>
+                Recorde: {user.best_streak}{' '}
+                {user.best_streak === 1 ? 'dia' : 'dias'}
+              </Text>
             </View>
           </View>
         </View>
@@ -204,6 +208,12 @@ const styles = StyleSheet.create({
   streakSubtitle: {
     color: '#FFFFFF',
     fontSize: 16,
+    textAlign: 'center',
+  },
+  recordSubtitle: {
+    color: '#AAB6C5',
+    fontSize: 14,
+    marginTop: 8,
     textAlign: 'center',
   },
   rankingCard: {

@@ -1,206 +1,487 @@
-// import { useState } from 'react';
-// import {
-//   ActivityIndicator,
-//   Pressable,
-//   ScrollView,
-//   StyleSheet,
-//   Text,
-//   View,
-// } from 'react-native';
-// import { useSQLiteContext } from 'expo-sqlite';
-// import { getRandomQuestion } from '../../data/questions';
-// import { saveAnswer } from '../../database/repositories/answersRepository';
-// import type { Question } from '../../types';
+import { useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useSQLiteContext } from 'expo-sqlite';
+import { UserProvider } from '../../../contexts/UserContext';
+import { getRandomQuestion } from '../../../data/questions';
+import { saveAnswer } from '../../../database/repositories/answersRepository';
+import type { Question } from '../../../types';
 
-// const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+const ALTERNATIVE_LETTERS = ['A', 'B', 'C', 'D', 'E'];
+const DISCIPLINE_TITLES: Record<string, string> = {
+  'ciencias-humanas': 'Ciências Humanas e suas Tecnologias',
+  'ciencias-natureza': 'Ciências da Natureza e suas Tecnologias',
+  linguagens: 'Linguagens, Códigos e suas Tecnologias',
+  matematica: 'Matemática e suas Tecnologias',
+};
 
-// export default function Jogos() {
-//   const db = useSQLiteContext();
-//   const [question, setQuestion] = useState<Question | undefined>(
-//     () => getRandomQuestion()
-//   );
-//   const [selected, setSelected] = useState<number | null>(null);
-//   const [saving, setSaving] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
+export default function TelaJogo() {
+  const db = useSQLiteContext();
+  const { tema: rawTheme } = useLocalSearchParams<{ tema?: string }>();
+  const tema = rawTheme || undefined;
+  const [question, setQuestion] = useState<Question | undefined>(() =>
+    getRandomQuestion({ tema })
+  );
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [phase, setPhase] = useState<'question' | 'correct' | 'incorrect'>(
+    'question'
+  );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const savingLock = useRef(false);
 
-//   async function handleAnswer(index: number) {
-//     if (!question || selected !== null || saving) return;
+  async function handleAnswer(index: number) {
+    if (!question || selectedIndex !== null || savingLock.current) return;
 
-//     setSaving(true);
-//     setError(null);
-//     try {
-//       await saveAnswer(db, question, index);
-//       setSelected(index);
-//     } catch {
-//       setError('Não foi possível salvar sua resposta no banco local.');
-//     } finally {
-//       setSaving(false);
-//     }
-//   }
+    savingLock.current = true;
+    setSaving(true);
+    setError(null);
+    try {
+      const isCorrect = await saveAnswer(db, question, index);
+      setSelectedIndex(index);
+      setPhase(isCorrect ? 'correct' : 'incorrect');
+    } catch (cause) {
+      console.error('Erro ao salvar resposta local:', cause);
+      setError('Não foi possível salvar sua resposta. Tente novamente.');
+    } finally {
+      savingLock.current = false;
+      setSaving(false);
+    }
+  }
 
-//   function handleNextQuestion() {
-//     setQuestion(getRandomQuestion());
-//     setSelected(null);
-//     setError(null);
-//   }
+  function handleNextQuestion() {
+    if (!question) return;
+    setQuestion(getRandomQuestion({ tema, excludeId: question.id }));
+    setSelectedIndex(null);
+    setPhase('question');
+    setError(null);
+  }
 
-//   const currentQuestion = question;
-//   if (!currentQuestion) {
-//     return (
-//       <View style={styles.emptyState}>
-//         <Text style={styles.emptyText}>Nenhuma questão disponível.</Text>
-//       </View>
-//     );
-//   }
+  function goBack() {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/jogos');
+    }
+  }
 
-//   function getOptionStyle(index: number, correctIndex: number) {
-//     if (selected === null) return styles.option;
-//     if (index === correctIndex) {
-//       return [styles.option, styles.optionCorrect];
-//     }
-//     if (index === selected) return [styles.option, styles.optionWrong];
-//     return [styles.option, styles.optionDisabled];
-//   }
+  const displayedAlternativeIndexes = !question
+    ? []
+    : phase === 'question'
+      ? question.alternativas.map((_, index) => index)
+      : selectedIndex === null
+        ? []
+        : selectedIndex === question.correta
+          ? [question.correta]
+          : [selectedIndex, question.correta];
 
-//   return (
-//     <ScrollView contentContainerStyle={styles.container}>
-//       <Text style={styles.title}>Hora de jogar!</Text>
-//       <View style={styles.card}>
-//         <Text style={styles.materia}>{currentQuestion.materia}</Text>
-//         <Text style={styles.pergunta}>{currentQuestion.pergunta}</Text>
-//         {currentQuestion.alternativas.map((alternative, index) => (
-//           <Pressable
-//             key={`${currentQuestion.id}-${index}`}
-//             accessibilityRole="button"
-//             disabled={selected !== null || saving}
-//             onPress={() => handleAnswer(index)}
-//             style={getOptionStyle(index, currentQuestion.correta)}
-//           >
-//             <Text style={styles.optionText}>
-//               {LETTERS[index]}) {alternative}
-//             </Text>
-//           </Pressable>
-//         ))}
-//         {saving && <ActivityIndicator color="#4E88DF" />}
-//         {error && <Text style={styles.error}>{error}</Text>}
-//         {selected !== null && (
-//           <View style={styles.feedback}>
-//             <Text style={styles.feedbackTitle}>
-//               {selected === currentQuestion.correta ? '✅ Acertou!' : '❌ Errou!'}
-//             </Text>
-//             {currentQuestion.explicacao ? (
-//               <Text style={styles.explicacao}>{currentQuestion.explicacao}</Text>
-//             ) : null}
-//             <Pressable
-//               accessibilityRole="button"
-//               onPress={handleNextQuestion}
-//               style={styles.resetButton}
-//             >
-//               <Text style={styles.resetText}>Próxima questão</Text>
-//             </Pressable>
-//           </View>
-//         )}
-//       </View>
-//     </ScrollView>
-//   );
-// }
+  return (
+    <UserProvider>
+      <View style={styles.screen}>
+        <View style={styles.header}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            onPress={goBack}
+            style={styles.backButton}
+          >
+            <Ionicons name="arrow-back" size={30} color="#FFFFFF" />
+          </Pressable>
+          <Text style={styles.disciplineTitle}>
+            {question
+              ? DISCIPLINE_TITLES[question.tema ?? ''] ?? question.materia
+              : 'Questões'}
+          </Text>
+        </View>
+        <ScrollView contentContainerStyle={styles.container}>
+          {!question ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>Nenhuma questão disponível.</Text>
+            </View>
+          ) : (
+            <View style={styles.content}>
+              <View
+                style={[
+                  styles.questionCard,
+                  phase !== 'question' && styles.questionCardResult,
+                ]}
+              >
+                <Text style={styles.questionTitle}>{question.titulo}</Text>
+                {question.contexto ? (
+                  <Text style={styles.contexto}>{question.contexto}</Text>
+                ) : null}
+                {question.imagens.map((image, index) => (
+                  <Image
+                    key={`${question.id}-image-${index}`}
+                    source={image}
+                    style={styles.questionImage}
+                    resizeMode="contain"
+                    accessibilityLabel={`Imagem ${index + 1} da questão ${question.numero}`}
+                  />
+                ))}
+                {question.pergunta ? (
+                  <Text style={styles.pergunta}>{question.pergunta}</Text>
+                ) : null}
+              </View>
 
-// const styles = StyleSheet.create({
-//   emptyState: {
-//     flex: 1,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     padding: 24,
-//     backgroundColor: '#000000',
-//   },
-//   emptyText: {
-//     color: '#FFFFFF',
-//     fontSize: 18,
-//     textAlign: 'center',
-//   },
-//   container: {
-//     flexGrow: 1,
-//     padding: 20,
-//     paddingTop: 36,
-//     backgroundColor: '#000000',
-//   },
-//   title: {
-//     marginBottom: 20,
-//     color: '#FFFFFF',
-//     fontSize: 30,
-//     fontWeight: 'bold',
-//     textAlign: 'center',
-//   },
-//   card: {
-//     backgroundColor: '#111111',
-//     borderColor: '#263D5A',
-//     borderWidth: 1,
-//     borderRadius: 16,
-//     padding: 20,
-//   },
-//   materia: {
-//     color: '#4E88DF',
-//     fontSize: 12,
-//     fontWeight: '700',
-//     textTransform: 'uppercase',
-//     marginBottom: 8,
-//   },
-//   pergunta: {
-//     color: '#FFFFFF',
-//     fontSize: 18,
-//     fontWeight: '600',
-//     marginBottom: 16,
-//   },
-//   option: {
-//     padding: 14,
-//     borderRadius: 10,
-//     borderWidth: 1.5,
-//     borderColor: '#52657A',
-//     marginBottom: 10,
-//     backgroundColor: '#1A1A1A',
-//   },
-//   optionCorrect: {
-//     borderColor: '#2ECC71',
-//     backgroundColor: '#153323',
-//   },
-//   optionWrong: {
-//     borderColor: '#E74C3C',
-//     backgroundColor: '#3A1D1B',
-//   },
-//   optionDisabled: {
-//     opacity: 0.5,
-//   },
-//   optionText: {
-//     color: '#FFFFFF',
-//     fontSize: 16,
-//   },
-//   error: {
-//     color: '#FF8A80',
-//     marginTop: 10,
-//   },
-//   feedback: {
-//     marginTop: 12,
-//   },
-//   feedbackTitle: {
-//     color: '#FFFFFF',
-//     fontSize: 18,
-//     fontWeight: 'bold',
-//     marginBottom: 6,
-//   },
-//   explicacao: {
-//     color: '#D0D0D0',
-//     fontSize: 14,
-//     marginBottom: 12,
-//   },
-//   resetButton: {
-//     alignSelf: 'flex-start',
-//     paddingVertical: 8,
-//     paddingHorizontal: 14,
-//     borderRadius: 8,
-//     backgroundColor: '#4E88DF',
-//   },
-//   resetText: {
-//     color: '#FFFFFF',
-//     fontWeight: '600',
-//   },
-// });
+              {phase !== 'question' ? (
+                <Text
+                  accessibilityLiveRegion="polite"
+                  style={
+                    phase === 'correct'
+                      ? styles.correctFeedback
+                      : styles.incorrectFeedback
+                  }
+                >
+                  {phase === 'correct'
+                    ? 'Resposta correta!'
+                    : 'Resposta incorreta. Veja a alternativa correta.'}
+                </Text>
+              ) : null}
+
+              {displayedAlternativeIndexes.map((index) => {
+                const isCorrect = index === question.correta;
+                const answerStyle =
+                  phase === 'question'
+                    ? styles.option
+                    : isCorrect
+                      ? styles.optionCorrect
+                      : styles.optionWrong;
+
+                return (
+                  <Pressable
+                    key={`${question.id}-${index}`}
+                    accessibilityRole="button"
+                    accessibilityState={{
+                      disabled: phase !== 'question' || saving,
+                    }}
+                    disabled={phase !== 'question' || saving}
+                    onPress={() => void handleAnswer(index)}
+                    style={[
+                      answerStyle,
+                      phase !== 'question' && styles.resultOption,
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.optionText,
+                        phase !== 'question' &&
+                          (isCorrect
+                            ? styles.correctOptionText
+                            : styles.incorrectOptionText),
+                      ]}
+                    >
+                      {ALTERNATIVE_LETTERS[index] ?? `${index + 1}`}){' '}
+                      {question.alternativas[index]}
+                    </Text>
+                    {question.imagensAlternativas[index] !== null ? (
+                      <Image
+                        source={question.imagensAlternativas[index] ?? undefined}
+                        style={styles.alternativeImage}
+                        resizeMode="contain"
+                        accessibilityLabel={`Imagem da alternativa ${ALTERNATIVE_LETTERS[index] ?? index + 1}`}
+                      />
+                    ) : null}
+                  </Pressable>
+                );
+              })}
+
+              {phase !== 'question' && question.explicacao ? (
+                <View style={styles.explanationCard}>
+                  <Text style={styles.explanationTitle}>Entenda a resposta</Text>
+                  <Text style={styles.explanationText}>
+                    {question.explicacao}
+                  </Text>
+                </View>
+              ) : null}
+
+              {saving ? <ActivityIndicator color="#4E88DF" /> : null}
+              {error ? <Text style={styles.error}>{error}</Text> : null}
+              {phase !== 'question' ? (
+                <View style={styles.resultSection}>
+                  {phase === 'correct' ? (
+                    <View style={styles.rewardCard}>
+                      <Text style={styles.rewardLabel}>Recompensas:</Text>
+                      <Text style={styles.rewardPlus}>+</Text>
+                      <Image
+                        source={require('../../../../assets/fogo - black back.jpeg')}
+                        style={styles.rewardIcon}
+                        resizeMode="contain"
+                        accessibilityLabel="Sequência de estudos"
+                      />
+
+                      <Text style={styles.rewardAmount}>+</Text>
+                      <Image
+                        source={require('../../../../assets/star - black back.jpeg')}
+                        style={styles.rewardIcon}
+                        resizeMode="contain"
+                        accessibilityLabel="Moeda"
+                      />
+                    </View>
+                  ) : null}
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={handleNextQuestion}
+                    style={styles.resultButton}
+                  >
+                    <Text style={styles.resultButtonText}>Jogar Novamente</Text>
+                  </Pressable>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => router.replace('/home')}
+                    style={styles.resultButton}
+                  >
+                    <Text style={styles.resultButtonText}>Sair</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+            </View>
+          )}
+        </ScrollView>
+      </View>
+    </UserProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  header: {
+    minHeight: 76,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+  },
+  backButton: {
+    width: 42,
+    height: 44,
+    justifyContent: 'center',
+  },
+  disciplineTitle: {
+    flex: 1,
+    color: '#7BAEFA',
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingRight: 42,
+  },
+  container: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 36,
+  },
+  content: {
+    width: '100%',
+    maxWidth: 620,
+    alignSelf: 'center',
+  },
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  emptyText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    textAlign: 'center',
+  },
+  questionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#83A5FF',
+    shadowOpacity: 0.65,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  questionCardResult: {
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  questionTitle: {
+    color: '#111111',
+    fontSize: 15,
+    fontWeight: '900',
+    marginBottom: 18,
+  },
+  contexto: {
+    color: '#111111',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+    lineHeight: 23,
+  },
+  pergunta: {
+    color: '#111111',
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: 8,
+    marginBottom: 12,
+    lineHeight: 23,
+  },
+  questionImage: {
+    width: '100%',
+    height: 220,
+    marginTop: 8,
+    marginBottom: 8,
+    backgroundColor: '#FFFFFF',
+  },
+  option: {
+    minHeight: 48,
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#7085A6',
+    marginBottom: 12,
+    backgroundColor: '#000000',
+    shadowColor: '#83A5FF',
+    shadowOpacity: 0.35,
+    shadowRadius: 5,
+    elevation: 4,
+  },
+  optionCorrect: {
+    borderColor: '#66E978',
+    backgroundColor: '#000000',
+  },
+  optionWrong: {
+    borderColor: '#FF4C61',
+    backgroundColor: '#000000',
+  },
+  resultOption: {
+    borderWidth: 2,
+    minHeight: 64,
+    paddingHorizontal: 18,
+    paddingVertical: 18,
+    marginBottom: 16,
+    borderRadius: 16,
+    shadowColor: 'transparent',
+    shadowOpacity: 0,
+    shadowRadius: 0,
+    elevation: 0,
+  },
+  optionText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  correctOptionText: {
+    color: '#7BFF72',
+  },
+  incorrectOptionText: {
+    color: '#FF6578',
+  },
+  alternativeImage: {
+    width: '100%',
+    height: 160,
+    marginTop: 8,
+  },
+  error: {
+    color: '#FF8A80',
+    marginTop: 10,
+  },
+  correctFeedback: {
+    color: '#7BFF72',
+    fontSize: 18,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  incorrectFeedback: {
+    color: '#FF6578',
+    fontSize: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  explanationCard: {
+    padding: 18,
+    marginTop: 4,
+    borderRadius: 16,
+    backgroundColor: '#111111',
+    borderWidth: 1,
+    borderColor: '#4A4A4A',
+  },
+  explanationTitle: {
+    color: '#A9C6FF',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  explanationText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    lineHeight: 23,
+  },
+  resultSection: {
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  rewardCard: {
+    width: '100%',
+    minHeight: 70,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    padding: 12,
+    borderRadius: 18,
+    backgroundColor: '#050505',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+  },
+  rewardLabel: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  rewardAmount: {
+    color: '#7BFF72',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  rewardPlus: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  rewardIcon: {
+    width: 34,
+    height: 34,
+  },
+  resultButton: {
+    width: '72%',
+    minHeight: 46,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 16,
+    backgroundColor: '#000000',
+    borderWidth: 1,
+    borderColor: '#7BAEFA',
+  },
+  resultButtonText: {
+    color: '#A9C6FF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+});

@@ -1,62 +1,61 @@
 
-import {
-  View,
-  Image,
-  Text,
-  StyleSheet,
-} from 'react-native';
-
-type AppHeaderProps = {
-  star: number;
-  streak: number;
-};
-
+import { useCallback } from 'react';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { useUser } from '../contexts/UserContext';
 
 export default function AppHeader() {
-  const { user, loading } = useUser();
+  const { user, loading, error, refreshUser } = useUser();
 
-  const star = user?.coins ?? 0;
-  const streak = user?.streak ?? 0;
+  useFocusEffect(
+    useCallback(() => {
+      void refreshUser();
+    }, [refreshUser])
+  );
 
-  // * Estrela já está funcional e pronta, mas não estará presente no MVP: 
-  // <View style={styles.starIndicator}>
-  //   <Image
-  //     source={require('../../assets/star - black back.jpeg')}
-  //     style={styles.fireIcon}
-  //     resizeMode="contain"
-  //   />
+  const coins = loading ? '...' : user ? String(user.coins) : '--';
+  const streak = loading ? '...' : user ? String(user.streak) : '--';
 
-  //   <View style={styles.badge}>
-  //     <Text style={styles.badgeText}>{star}</Text>
-  //   </View>
-  // </View>
   return (
-    <View style={styles.container}>
-
-      <Image
-        source={require('../../assets/nome_gabu.jpeg')}
-        style={styles.nome_gabu}
-        resizeMode="contain"
-      />
-
-      <View style={styles.streakIndicator}>
+    <View style={styles.wrapper}>
+      <View style={styles.container}>
+        <View style={styles.coinIndicator}>
+          <Image
+            source={require('../../assets/star - black back.jpeg')}
+            style={styles.icon}
+            resizeMode="contain"
+            accessibilityLabel="Moedas"
+          />
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{coins}</Text>
+          </View>
+        </View>
         <Image
-          source={require('../../assets/fogo - black back.jpeg')}
-          style={styles.fireIcon}
+          source={require('../../assets/nome_gabu.jpeg')}
+          style={styles.nome_gabu}
           resizeMode="contain"
         />
-
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{streak}</Text>
+        <View style={styles.streakIndicator}>
+          <Image
+            source={require('../../assets/fogo - black back.jpeg')}
+            style={styles.icon}
+            resizeMode="contain"
+            accessibilityLabel="Sequência diária"
+          />
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>{streak}</Text>
+          </View>
         </View>
       </View>
-
+      {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    backgroundColor: '#000000',
+  },
   container: {
     height: 110,
     backgroundColor: '#000000',
@@ -72,6 +71,13 @@ const styles = StyleSheet.create({
     height: 70,
   },
 
+  coinIndicator: {
+    position: 'absolute',
+    left: 24,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+
   streakIndicator: {
     position: 'absolute',
     right: 24,
@@ -79,33 +85,34 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
 
-  starIndicator: {
-    position: 'absolute',
-    left: 24,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-
-  fireIcon: {
+  icon: {
     width: 50,
     height: 50,
-    marginBottom: 15
+    marginBottom: 15,
   },
 
   badge: {
     backgroundColor: '#4E88DF',
-    width: 25,
+    minWidth: 25,
     height: 25,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: -5,
     marginTop: -5,
+    paddingHorizontal: 3,
   },
 
   badgeText: {
     color: '#000000',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  error: {
+    color: '#FF8A80',
+    fontSize: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 6,
+    textAlign: 'center',
   },
 });

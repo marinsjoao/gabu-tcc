@@ -1,11 +1,16 @@
 export type Question = {
   id: number;
+  numero: number;
+  titulo: string;
   materia: string;
   tema?: string;
   prova?: string | number;
   nivel?: string;
+  contexto: string;
   pergunta: string;
   alternativas: string[];
+  imagens: number[];
+  imagensAlternativas: (number | null)[];
   correta: number; // índice da alternativa correta
   explicacao: string;
 };
@@ -13,8 +18,8 @@ export type Question = {
 export type User = {
   id: number;
   name: string | null;
-  xp: number;
   coins: number;
+  best_coins: number;
   streak: number;
   best_streak: number;
   last_study_date: string | null; // 'YYYY-MM-DD'
