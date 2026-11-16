@@ -8,63 +8,51 @@ import {
 } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
-import { countAnswers } from '../../database/repositories/answersRepository';
+import {
+  getAnswerStatistics,
+  type AnswerStatistics,
+} from '../../database/repositories/answersRepository';
 import { getUser } from '../../database/repositories/userRepository';
 import type { User } from '../../types';
+import { getDisciplineLabel } from '../../data/questions';
 import AppHeader from '../../components/AppHeader';
 import EmBreve from '../../components/EmBreve';
 import EstatisticaPessoal from '../../components/EstatisticaPessoal';
 
 type StatsData = {
   user: User;
-  answers: number;
+  answers: AnswerStatistics;
 };
 
 export default function Stats() {
   const db = useSQLiteContext();
   const [stats, setStats] = useState<StatsData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-
-      async function loadUser() {
-        try {
-          const loadedUser = await getUser(db);
-          if (active) {
-            setUser(loadedUser);
-            setError(null);
-          }
-        } catch {
-          if (active) setError('Não foi possível carregar seu progresso local.');
-        }
-      }
-
-      void loadUser();
-      return () => {
-        active = false;
-      };
-    }, [db])
-  );
+  const [loading, setLoading] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
 
       async function loadStats() {
+        setLoading(true);
+        setError(null);
         try {
           const [user, answers] = await Promise.all([
             getUser(db),
-            countAnswers(db),
+            getAnswerStatistics(db),
           ]);
           if (active) {
             setStats({ user, answers });
             setError(null);
           }
-        } catch {
-          if (active) setError('Não foi possível carregar suas estatísticas locais.');
+        } catch (cause) {
+          console.error('Erro ao carregar estatísticas locais:', cause);
+          if (active) {
+            setError('Não foi possível carregar suas estatísticas locais.');
+          }
+        } finally {
+          if (active) setLoading(false);
         }
       }
 
@@ -75,89 +63,90 @@ export default function Stats() {
     }, [db])
   );
 
-  if (!user || error) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.error}>{error ?? 'Usuário local indisponível.'}</Text>
-      </View>
-    );
-  }
-
-  if (!stats && !error) {
-    return (
-      <View style={styles.center}>
-        <AppHeader/>
-        <ActivityIndicator size="large" color="#4E88DF" />
-      </View>
-    );
-  }
-
-  if (error || !stats) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.error}>{error ?? 'Estatísticas indisponíveis.'}</Text>
-      </View>
-    );
-  }
-
-  const metrics = [
-    { label: 'XP', value: stats.user.xp },
-    { label: 'Moedas', value: stats.user.coins },
-    { label: 'Sequência atual', value: stats.user.streak },
-    { label: 'Melhor sequência', value: stats.user.best_streak },
-    { label: 'Respostas registradas', value: stats.answers },
-    { label: 'Meta diária', value: stats.user.daily_goal },
-  ];
+  const disciplineStats = stats
+    ? Object.entries(stats.answers.byDiscipline)
+        .map(([id, result]) => ({
+          label: getDisciplineLabel(id),
+          ...result,
+          accuracy:
+            result.correct + result.incorrect === 0
+              ? 0
+              : result.correct / (result.correct + result.incorrect),
+        }))
+        .sort((a, b) => b.accuracy - a.accuracy)
+    : [];
+  const bestDiscipline = disciplineStats[0];
+  const worstDiscipline = disciplineStats[disciplineStats.length - 1];
 
   return (
     <View style={styles.containerAll}>
-      <AppHeader/>
+      <AppHeader />
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator size="large" color="#4E88DF" />
+        </View>
+      ) : error || !stats ? (
+        <View style={styles.center}>
+          <Text style={styles.error}>{error ?? 'Estatísticas indisponíveis.'}</Text>
+        </View>
+      ) : (
         <ScrollView contentContainerStyle={styles.container}>
           <Text style={styles.title}>Estatísticas</Text>
-          
+
           <Text style={styles.subtitle}>Geral</Text>
           <View style={styles.linha} />
+          <View style={styles.estatisticasPessoais}>
+            <EstatisticaPessoal titulo="Moedas disponíveis" texto={String(stats.user.coins)} />
+            <EstatisticaPessoal titulo="Recorde de moedas" texto={String(stats.user.best_coins)} />
+            <EstatisticaPessoal titulo="Sequência atual" texto={String(stats.user.streak)} />
+            <EstatisticaPessoal titulo="Melhor sequência" texto={String(stats.user.best_streak)} />
+            <EstatisticaPessoal titulo="Respostas registradas" texto={String(stats.answers.total)} />
+            <EstatisticaPessoal titulo="Meta diária" texto={String(stats.user.daily_goal)} />
+            <EstatisticaPessoal titulo="Dias estudados" texto={String(stats.answers.daysPlayed)} />
+          </View>
 
-          <EmBreve/>
-          
-          <Text style={styles.subtitle}>Amigos</Text>
-          <View style={styles.linha} />
-
-          <EmBreve/>
-          
           <Text style={styles.subtitle}>Estatísticas Pessoais</Text>
           <View style={styles.linha} />
           <View style={styles.estatisticasPessoais}>
-            <EstatisticaPessoal titulo={'Acertos Gerais'} texto={'50'}/>
-            <EstatisticaPessoal titulo={'Erros Gerais'} texto={'8'}/>
-            
-            <Text> {'\n'} </Text>
-
-            <EstatisticaPessoal titulo={'Melhor Disciplina'} texto={'Matemática e suas tecnologias'}/>
-            <EstatisticaPessoal titulo={'Acertos'} texto={'10'}/>
-            <EstatisticaPessoal titulo={'Erros'} texto={'1'}/>
-
-            <Text> {'\n'} </Text>
-
-            <EstatisticaPessoal titulo={'Disciplina a melhorar'} texto={'Ciências Humanas e suas tecnologias'}/>
-            <EstatisticaPessoal titulo={'Acertos'} texto={'2'}/>
-            <EstatisticaPessoal titulo={'Erros'} texto={'13'}/>
-
-            <Text> {'\n'} </Text>
-
-            <EstatisticaPessoal titulo={'Quantidade de Dias Jogados'} texto={'130'}/>
-
-            <Text> {'\n'} </Text>
-
-            <EstatisticaPessoal titulo={'Melhor Streak'} texto={String(stats.user.best_streak)}/>
+            <EstatisticaPessoal titulo="Acertos gerais" texto={String(stats.answers.correct)} />
+            <EstatisticaPessoal titulo="Erros gerais" texto={String(stats.answers.incorrect)} />
+            <Text style={styles.groupTitle}>Melhor disciplina</Text>
+            <EstatisticaPessoal
+              titulo="Disciplina"
+              texto={bestDiscipline?.label ?? 'Sem respostas'}
+            />
+            <EstatisticaPessoal
+              titulo="Acertos"
+              texto={String(bestDiscipline?.correct ?? 0)}
+            />
+            <EstatisticaPessoal
+              titulo="Erros"
+              texto={String(bestDiscipline?.incorrect ?? 0)}
+            />
+            <Text style={styles.groupTitle}>Disciplina a melhorar</Text>
+            <EstatisticaPessoal
+              titulo="Disciplina"
+              texto={worstDiscipline?.label ?? 'Sem respostas'}
+            />
+            <EstatisticaPessoal
+              titulo="Acertos"
+              texto={String(worstDiscipline?.correct ?? 0)}
+            />
+            <EstatisticaPessoal
+              titulo="Erros"
+              texto={String(worstDiscipline?.incorrect ?? 0)}
+            />
           </View>
+
+          <Text style={styles.subtitle}>Amigos</Text>
+          <View style={styles.linha} />
+          <EmBreve />
 
           <Text style={styles.subtitle}>Histórico de Duelos</Text>
           <View style={styles.linha} />
-
-          <EmBreve/>
-
-      </ScrollView>
+          <EmBreve />
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -178,6 +167,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 20,
     paddingTop: 36,
+    paddingBottom: 110,
   },
   title: {
     color: '#FFFFFF',
@@ -201,33 +191,12 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 15,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  card: {
-    width: '48%',
-    minHeight: 110,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#263D5A',
-    backgroundColor: '#111111',
-  },
-  value: {
+  groupTitle: {
     color: '#FFFFFF',
-    fontSize: 28,
+    fontSize: 16,
     fontWeight: 'bold',
-  },
-  label: {
-    color: '#AAB6C5',
-    fontSize: 14,
-    marginTop: 6,
-    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 6,
   },
   error: {
     color: '#FF8A80',

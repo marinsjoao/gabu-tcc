@@ -1,6 +1,6 @@
 
 import { Tabs } from 'expo-router';
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 import { View, StyleSheet } from 'react-native';
 import { UserProvider } from '../../contexts/UserContext';
 
@@ -8,7 +8,6 @@ export default function TabLayout() {
   return (
     <UserProvider>
       <Tabs
-        initialRouteName="home"
         screenOptions={({ route }) => ({
         headerShown: false,
         tabBarShowLabel: false,
