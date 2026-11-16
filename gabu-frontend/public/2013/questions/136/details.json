@@ -4,12 +4,13 @@
     "year": 2013,
     "language": null,
     "discipline": "matematica",
-    "context": "![](https://enem.dev/2013/questions/136/2b7178ab-7991-4b9d-9232-a6f9dadd475c.png)",
+    "context": "As torres Puerta de Europa, em Madri, são prismas oblíquos de base quadrada. Cada uma tem 114 m de altura e está inclinada 15° em relação à vertical. A imagem mostra uma dessas torres.\n\n![](https://enem.dev/2013/questions/136/2b7178ab-7991-4b9d-9232-a6f9dadd475c.png)",
     "files": [
         "https://enem.dev/2013/questions/136/2b7178ab-7991-4b9d-9232-a6f9dadd475c.png"
     ],
     "correctAlternative": "E",
     "alternativesIntroduction": "Utilizando 0,26 como valor aproximado para a tangente de 15° e duas casas decimais nas operações, descobre-se que a área da base desse prédio ocupa na avenida um espaço",
+    "explanation": "A torre está inclinada 15° em relação à vertical. No triângulo retângulo formado, a altura de 114 m é o cateto adjacente e o lado da base quadrada é o cateto oposto. Assim, tg(15°) = lado / 114; lado = 0,26 × 114 = 29,64 m. Como a base é quadrada, sua área é 29,64² = 878,53 m². Portanto, a área é maior que 700 m²: alternativa E.",
     "alternatives": [
         {
             "letter": "A",
