@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
+import LoadingScreen from '../components/LoadingScreen';
 import { getUser, saveUserName } from '../database/repositories/userRepository';
 
 export default function Login() {
@@ -65,11 +66,7 @@ export default function Login() {
   }
 
   if (loading) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4E88DF" />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (
