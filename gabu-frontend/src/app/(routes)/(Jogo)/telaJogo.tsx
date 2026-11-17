@@ -35,6 +35,7 @@ export default function TelaJogo() {
   const [phase, setPhase] = useState<'question' | 'correct' | 'incorrect'>(
     'question'
   );
+  const [streakUpdated, setStreakUpdated] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const savingLock = useRef(false);
@@ -46,9 +47,10 @@ export default function TelaJogo() {
     setSaving(true);
     setError(null);
     try {
-      const isCorrect = await saveAnswer(db, question, index);
+      const result = await saveAnswer(db, question, index);
       setSelectedIndex(index);
-      setPhase(isCorrect ? 'correct' : 'incorrect');
+      setPhase(result.isCorrect ? 'correct' : 'incorrect');
+      setStreakUpdated(result.streakUpdated);
     } catch (cause) {
       console.error('Erro ao salvar resposta local:', cause);
       setError('Não foi possível salvar sua resposta. Tente novamente.');
@@ -63,6 +65,7 @@ export default function TelaJogo() {
     setQuestion(getRandomQuestion({ tema, excludeId: question.id }));
     setSelectedIndex(null);
     setPhase('question');
+    setStreakUpdated(false);
     setError(null);
   }
 
@@ -208,24 +211,31 @@ export default function TelaJogo() {
               {error ? <Text style={styles.error}>{error}</Text> : null}
               {phase !== 'question' ? (
                 <View style={styles.resultSection}>
-                  {phase === 'correct' ? (
+                  {phase === 'correct' || streakUpdated ? (
                     <View style={styles.rewardCard}>
                       <Text style={styles.rewardLabel}>Recompensas:</Text>
-                      <Text style={styles.rewardPlus}>+</Text>
-                      <Image
-                        source={require('../../../../assets/fogo - black back.jpeg')}
-                        style={styles.rewardIcon}
-                        resizeMode="contain"
-                        accessibilityLabel="Sequência de estudos"
-                      />
-
-                      <Text style={styles.rewardAmount}>+</Text>
-                      <Image
-                        source={require('../../../../assets/star - black back.jpeg')}
-                        style={styles.rewardIcon}
-                        resizeMode="contain"
-                        accessibilityLabel="Moeda"
-                      />
+                      {streakUpdated ? (
+                        <>
+                          <Text style={styles.rewardPlus}>+</Text>
+                          <Image
+                            source={require('../../../../assets/fogo - black back.jpeg')}
+                            style={styles.rewardIcon}
+                            resizeMode="contain"
+                            accessibilityLabel="Sequência de estudos"
+                          />
+                        </>
+                      ) : null}
+                      {phase === 'correct' ? (
+                        <>
+                          <Text style={styles.rewardAmount}>+</Text>
+                          <Image
+                            source={require('../../../../assets/star - black back.jpeg')}
+                            style={styles.rewardIcon}
+                            resizeMode="contain"
+                            accessibilityLabel="Moeda"
+                          />
+                        </>
+                      ) : null}
                     </View>
                   ) : null}
                   <Pressable

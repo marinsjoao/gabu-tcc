@@ -7,7 +7,7 @@ export async function saveAnswer(
   db: SQLiteDatabase,
   question: Question,
   selectedIndex: number
-): Promise<boolean> {
+): Promise<{ isCorrect: boolean; streakUpdated: boolean }> {
   if (
     !Number.isInteger(selectedIndex) ||
     selectedIndex < 0 ||
@@ -17,6 +17,7 @@ export async function saveAnswer(
   }
 
   const isCorrect = selectedIndex === question.correta;
+  let streakUpdated = false;
 
   await db.withTransactionAsync(async () => {
     await db.runAsync(
@@ -26,10 +27,10 @@ export async function saveAnswer(
       selectedIndex,
       isCorrect ? 1 : 0
     );
-    await addRewards(db, isCorrect ? 1 : 0);
+    streakUpdated = await addRewards(db, isCorrect ? 1 : 0);
   });
 
-  return isCorrect;
+  return { isCorrect, streakUpdated };
 }
 
 export type DisciplineAnswerStats = {
