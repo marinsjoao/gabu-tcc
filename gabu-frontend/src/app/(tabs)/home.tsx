@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Image,
   Pressable,
   ScrollView,
@@ -11,6 +10,7 @@ import {
 import { router, useFocusEffect } from 'expo-router';
 import { useSQLiteContext } from 'expo-sqlite';
 import AppHeader from '../../components/AppHeader';
+import LoadingScreen from '../../components/LoadingScreen';
 import { getUser } from '../../database/repositories/userRepository';
 import type { User } from '../../types';
 
@@ -57,11 +57,7 @@ export default function Home() {
   }, []);
 
   if (!user && !error) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#4E88DF" />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (!user || error) {
