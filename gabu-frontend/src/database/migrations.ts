@@ -1,6 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 
 export async function migrateDbIfNeeded(db: SQLiteDatabase) {
   const row = await db.getFirstAsync<{ user_version: number }>(
@@ -17,7 +17,6 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
       CREATE TABLE IF NOT EXISTS User (
         id INTEGER PRIMARY KEY CHECK (id = 1),
         name TEXT,
-        xp INTEGER NOT NULL DEFAULT 0,
         coins INTEGER NOT NULL DEFAULT 0,
         streak INTEGER NOT NULL DEFAULT 0,
         best_streak INTEGER NOT NULL DEFAULT 0,
@@ -42,6 +41,15 @@ export async function migrateDbIfNeeded(db: SQLiteDatabase) {
     currentVersion = 1;
   }
 
+  if (currentVersion < 2) {
+    await db.execAsync(`
+      ALTER TABLE User
+        ADD COLUMN best_coins INTEGER NOT NULL DEFAULT 0;
+
+      UPDATE User SET best_coins = coins;
+    `);
+    currentVersion = 2;
+  }
 
   await db.execAsync(`PRAGMA user_version = ${DATABASE_VERSION}`);
 }
